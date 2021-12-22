@@ -53,8 +53,6 @@ void aumentarPrioridadeAux2(PFILA f, PONT atual);
 
 void refazHeapMaximo(PFILA f, PONT atual);
 
-
-
 #define MAX 5
 
 PFILA criarFila(){
@@ -97,10 +95,9 @@ int tamanho(PFILA f){
 
 PONT buscarID(PFILA f, int id){
 	PONT atual;
-	 int i;
-  
-  for (i=0;i<f->elementosNoHeap;i++){
+  for (int i = 0; i < f->elementosNoHeap; i++){
     atual = f->heap[i];
+
     if (atual->id == id){
       return atual;
     }
@@ -121,27 +118,32 @@ bool inserirElemento(PFILA f, int id, float prioridade){
   aux->prioridade = prioridade;
   aux->posicao = tamanho(f);
 
-  f->referencias[aux->posicao] = aux;
+  f->elementosNoHeap = tamanho(f) + 1;
   f->heap[aux->posicao] = aux;
-  f->elementosNoHeap = aux->posicao;
-  
+  //f->referencias[aux->posicao] = aux;
+
   return true;
 }
 
 bool aumentarPrioridade(PFILA f, int id, float novaPrioridade){
-  bool res = false;
   
-  /* COMPLETAR */
+  PONT aux = buscarID(f,id);
+  if (id < 0 || id >= MAX || aux == NULL || novaPrioridade <= 0){
+    return false;
+  } 
   
-  return res;
+  aux->prioridade = novaPrioridade;
+  return true;
 }
 
 bool reduzirPrioridade(PFILA f, int id, float novaPrioridade){
-  bool res = false;
+  PONT aux = buscarID(f,id);
+  if (id < 0 || id >= MAX || aux == NULL || novaPrioridade <= 0){
+    return false;
+  } 
   
-  /* COMPLETAR */
-  
-  return res;
+  aux->prioridade = novaPrioridade;
+  return true;
 }
 
 PONT removerElemento(PFILA f){
