@@ -111,55 +111,58 @@ bool inserirElemento(PFILA f, int id, float prioridade){
   if (id < 0 || id >= MAX || x != NULL){
     return false;
   } 
-
+  int tam = tamanho(f);
   PONT aux = (PONT) malloc(sizeof(ELEMENTO));
-  
   aux->id = id;
   aux->prioridade = prioridade;
-  aux->posicao = tamanho(f);
 
-  f->elementosNoHeap = tamanho(f) + 1;
-  f->heap[aux->posicao] = aux;
-  //f->referencias[aux->posicao] = aux;
+  if (tam == 0){
+    aux->posicao = 0;
+    f->elementosNoHeap = tamanho(f) + 1;
+    f->heap[aux->posicao] = aux;
+    f->referencias[aux->posicao] = aux; 
 
-  return true;
+    return true;
+
+  }else{
+
+    for (int i = 0; i < tam; i++){
+      if (f->heap[i]->prioridade < prioridade){
+        PONT intermediario = f->heap[i];
+        aux->posicao = intermediario->posicao;
+        f->heap[i] = aux;
+        f->heap[i + 1] = f->referencias[i];
+      }
+
+    }
+    return true;
+  }
+
 }
 
 bool aumentarPrioridade(PFILA f, int id, float novaPrioridade){
   
-  PONT aux = buscarID(f,id);
-  if (id < 0 || id >= MAX || aux == NULL || novaPrioridade <= 0){
-    return false;
-  } 
-  
-  aux->prioridade = novaPrioridade;
+
   return true;
 }
 
 bool reduzirPrioridade(PFILA f, int id, float novaPrioridade){
-  PONT aux = buscarID(f,id);
-  if (id < 0 || id >= MAX || aux == NULL || novaPrioridade <= 0){
-    return false;
-  } 
-  
-  aux->prioridade = novaPrioridade;
+
   return true;
 }
 
 PONT removerElemento(PFILA f){
-  PONT res = NULL;
   
-  /* COMPLETAR */
-  
-  return res;
+  return NULL;
 }
 
 bool consultarPrioridade(PFILA f, int id, float* resposta){
-  bool res = false;
   
-  /* COMPLETAR */
-  
-  return res;
+  // PONT aux = buscaID(f, id);
+  // if (aux == NULL) return false;
+
+  // resposta = &aux->prioridade;
+  // return true;
 }
 
 int main() {
