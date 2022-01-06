@@ -82,87 +82,220 @@ bool exibirLog(PFILA f){
 
 int tamanho(PFILA f){
   int tam = 0;
-  PONT atual;
-  int i;
-  
-  for (i=0;i<f->elementosNoHeap;i++){
-    atual = f->heap[i];
+  for (int i=0;i<f->elementosNoHeap;i++){
     tam = tam + 1;
   }
   
   return tam;
 }
 
-PONT buscarID(PFILA f, int id){
-	PONT atual;
-  for (int i = 0; i < f->elementosNoHeap; i++){
-    atual = f->heap[i];
-
-    if (atual->id == id){
-      return atual;
-    }
-  }
-	return NULL;
-}
-
 bool inserirElemento(PFILA f, int id, float prioridade){
-  
-  PONT x = buscarID(f,id);
-  if (id < 0 || id >= MAX || x != NULL){
+  //Verifica se o ID é um valor válido
+  if(id < 0 || id >= MAX){
     return false;
-  } 
-  int tam = tamanho(f);
-  PONT aux = (PONT) malloc(sizeof(ELEMENTO));
-  aux->id = id;
-  aux->prioridade = prioridade;
-
-  if (tam == 0){
-    aux->posicao = 0;
-    f->elementosNoHeap = tamanho(f) + 1;
-    f->heap[aux->posicao] = aux;
-    f->referencias[aux->posicao] = aux; 
-
-    return true;
-
-  }else{
-
-    for (int i = 0; i < tam; i++){
-      if (f->heap[i]->prioridade < prioridade){
-        PONT intermediario = f->heap[i];
-        aux->posicao = intermediario->posicao;
-        f->heap[i] = aux;
-        f->heap[i + 1] = f->referencias[i];
-      }
-
-    }
-    return true;
+  //e depois verifica se o mesmo id já não fora usado
+  }else if (f->referencias[id] != NULL){
+    return false;
   }
 
+  //Alocação de memoria inicial da estrutura 
+  PONT elemento = (PONT) malloc(sizeof(ELEMENTO));
+  elemento->id = id;
+  elemento->prioridade = prioridade;
+  
+  //Ajuste do novo tamanho da árvora e alocação do novo id nas referencias
+  f->referencias[id] = elemento;
+  f->elementosNoHeap = f->elementosNoHeap + 1;
+
+  //Estrutura temporária para se percorrer o f->heap
+  PONT aux;
+  
+  //Index auxliares
+  int k = 1;
+  int insertAux = 0;
+
+  //Loop para encontrar o devido lugar de inserção do novo elemento
+  if (f->heap[0] != NULL){
+    aux = f->heap[0];
+    while(prioridade < aux->prioridade ){
+      aux = f->heap[k];
+      k = k + 1;
+      if (aux == NULL){
+        break;
+      }
+    }
+    insertAux = k - 1; // Valor da posição que deverá ser colocado
+    elemento->posicao = insertAux;
+  }
+
+  //Loop para reordenar toda a Estrutura caso a prioridade do novo elemento
+  //mude as ordens dos demais elementos
+  for(int i = MAX-2; i >= insertAux; i--){
+
+    if(f->heap[i] != NULL){
+      f->heap[i]->posicao += 1;
+      f->heap[i+1] = f->heap[i];
+    }
+
+  }
+  //Finalmente se coloca novo elemento no array heap em seu devido lugar
+  f->heap[insertAux] = elemento;
+
+  return true;
 }
 
 bool aumentarPrioridade(PFILA f, int id, float novaPrioridade){
   
+  //Verifica se o ID é um valor válido
+  if(id < 0 || id >= MAX){
+    return false;
+  //Primeiro verifica se o id existe na estrutura e depois se a nova prioridade selecionada é maior que a antiga
+  } else if(f->referencias[id] == NULL || f->referencias[id]->prioridade >= novaPrioridade){  
+    return false;
+  } 
+
+  int indexAux = 1;
+  PONT aux = f->heap[0];
+
+  while(aux->prioridade > novaPrioridade){
+    if(aux->id == id){
+      break; // Quebra o loop
+    } 
+    aux = f->heap[indexAux];
+    indexAux = indexAux + 1;
+  }
+
+  if(aux->id != id){
+
+    f->referencias[id] = NULL;
+
+    int posicaoExcluir;
+    for(indexAux = MAX-1; indexAux >= 0; indexAux--){
+      posicaoExcluir = indexAux;
+      if(f->heap[indexAux] != NULL){
+        if(f->heap[indexAux]->id == id) break;
+      }
+    }
+
+    for(indexAux = posicaoExcluir; indexAux < MAX; indexAux++){
+      if(f->heap[indexAux] != NULL && f->heap[indexAux+1] != NULL){
+        f->heap[indexAux] = f->heap[indexAux+1];
+        f->heap[indexAux]->posicao -= 1;
+
+      } else if(f->heap[indexAux+1] == NULL){
+        f->heap[indexAux] = NULL;
+      }
+    }
+
+    inserirElemento(f, id, novaPrioridade);
+    f->elementosNoHeap -= 1;
+  } else{
+    aux->prioridade = novaPrioridade;
+  }
 
   return true;
+
 }
 
 bool reduzirPrioridade(PFILA f, int id, float novaPrioridade){
+  
+   if(id < 0 || id >= MAX) return false;
+    if(f->referencias[id] == NULL) return false;
+    if(f->referencias[id]->prioridade <= novaPrioridade) return false;
 
-  return true;
+    int i;
+    PONT atual;
+
+    i = 1;
+    atual = f->heap[0];
+    while(atual->prioridade > novaPrioridade){
+        atual = f->heap[i];
+        i++;
+        if(atual->id == id) break;
+    }
+
+    if(atual->id != id){
+
+        f->referencias[id] = NULL;
+
+        int posicaoExcluir;
+        for(i = MAX-1; i >= 0; i--){
+            posicaoExcluir = i;
+            if(f->heap[i] != NULL){
+                if(f->heap[i]->id == id) break;
+            }
+
+        }
+
+        for(i = posicaoExcluir; i < MAX; i++){
+            if(f->heap[i] != NULL && f->heap[i+1] != NULL){
+
+                f->heap[i] = f->heap[i+1];
+                f->heap[i]->posicao -= 1;
+
+            } else if(f->heap[i+1] == NULL){
+                f->heap[i] = NULL;
+            }
+
+        }
+
+        inserirElemento(f, id, novaPrioridade);
+        f->elementosNoHeap -= 1;
+    } else{
+  
+      atual->prioridade = novaPrioridade;
+    }
+
+    return true;
+
 }
 
 PONT removerElemento(PFILA f){
-  
-  return NULL;
+  // Por meio do tamanho se verifica se é possível excluir elemento
+  int tam = tamanho(f);
+  if (tam == 0 ){
+    return NULL; // Retorna NULL quando não há elementos a serem excluídos
+  }
+
+  // Ajustamos o novo tamanho que a fila terá e retiramos das referencias o seu ID
+  f->referencias[f->heap[0]->id] = NULL;
+  f->elementosNoHeap = f->elementosNoHeap - 1;
+
+  //Criamos o elemento de resposta que será retornado e retirado do f->heap
+  PONT resp = f->heap[0];
+
+  //Loop para reorganizar toda a fila fazendo com que todos os elementos 
+  //caminhem um elemento para trás já que o atendido é o primeiro da fila
+  for(int i = 0; i < MAX; i++){
+
+    if(f->heap[i] != NULL && f->heap[i+1] != NULL){
+
+      f->heap[i] = f->heap[i+1];
+      f->heap[i]->posicao = f->heap[i]->posicao - 1;
+
+    }else{
+      //quando chega ao final da fila e toda a estrutura já foi rearranjada
+      f->heap[i] = NULL;
+
+    }
+
+  }
+  // Retorno do elemento retirado da fila
+  return resp;
 }
 
 bool consultarPrioridade(PFILA f, int id, float* resposta){
   
-  // PONT aux = buscaID(f, id);
-  // if (aux == NULL) return false;
+  //Verificação padrão se o id é valido e se ele existe dentro da estrutura
+  if (id < 0 || id >= MAX || f->referencias[id] == NULL){
+    return false;
+  } 
 
-  // resposta = &aux->prioridade;
-  // return true;
+  //Alocação do ponteiro resposta com a prioridade do Id selecionado
+  *resposta = f->referencias[id]->prioridade;
+
+  //Retorna Verdadeiro
+  return true;
 }
 
 int main() {
